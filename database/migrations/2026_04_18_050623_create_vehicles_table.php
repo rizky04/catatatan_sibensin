@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('license_plate'); // Contoh: B 1234 GAI
             $table->string('fuel_type_default')->nullable();
             $table->integer('odometer_initial')->default(0);
+            $table->boolean('is_active')->default(false)->after('odometer_initial');
             $table->timestamps();
         });
     }
