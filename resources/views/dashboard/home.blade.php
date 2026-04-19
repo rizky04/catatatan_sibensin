@@ -158,9 +158,9 @@
                         return;
                     }
 
-                    // Validasi ukuran (max 20MB)
-                    if (file.size > 20 * 1024 * 1024) {
-                        this.showNotification('Ukuran gambar maksimal 20MB', 'error');
+                    // Validasi ukuran (max 10MB)
+                    if (file.size > 10 * 1024 * 1024) {
+                        this.showNotification('Ukuran gambar maksimal 10MB', 'error');
                         return;
                     }
 
