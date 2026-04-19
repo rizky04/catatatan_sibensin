@@ -172,38 +172,15 @@
                             filledCount++;
                         }
 
-                       if (data.fuel_type) {
-    // Gunakan nilai asli dari AI, jangan dipaksa ke Pertalite
-    // Tapi tetap format agar rapi (capitalize first letter of each word)
-    let ft = data.fuel_type.toLowerCase();
-
-    // Mapping untuk produk yang dikenal (opsional, untuk konsistensi)
-    const fuelMappings = {
-        'pertalite': 'Pertalite',
-        'pertamax': 'Pertamax',
-        'pertamax turbo': 'Pertamax Turbo',
-        'dexlite': 'Dexlite',
-        'pertamina dex': 'Pertamina Dex',
-        'shell super': 'Shell Super',
-        'shell v-power': 'Shell V-Power',
-        'shell v power': 'Shell V-Power',
-        'bp 92': 'BP 92',
-        'bp 95': 'BP 95',
-        'vivo revvo 90': 'Vivo Revvo 90',
-        'vivo revvo 95': 'Vivo Revvo 95'
-    };
-
-    // Cek apakah ada di mapping
-    if (fuelMappings[ft]) {
-        this.fuel_type = fuelMappings[ft];
-    } else {
-        // Format manual: capitalize first letter of each word
-        let words = data.fuel_type.split(' ');
-        let formatted = words.map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
-        this.fuel_type = formatted;
-    }
-    filledCount++;
-}
+                        if (data.fuel_type) {
+                            let ft = data.fuel_type.toLowerCase();
+                            if (ft.includes('turbo')) this.fuel_type = 'Pertamax Turbo';
+                            else if (ft.includes('pertamax')) this.fuel_type = 'Pertamax';
+                            else if (ft.includes('dexlite')) this.fuel_type = 'Dexlite';
+                            else if (ft.includes('dex')) this.fuel_type = 'Pertamina Dex';
+                            else this.fuel_type = 'Pertalite';
+                            filledCount++;
+                        }
 
                         this.isAiGenerated = true;
                         this.showNotification(`✓ Berhasil mengisi ${filledCount} field`, 'success');
@@ -371,28 +348,8 @@
         placeholder="Contoh: Pertalite, Shell Super, Diesel, dll">
 </div>
                     </div>
-<div class="grid grid-cols-3 gap-2">
-    <div class="bg-gray-50 p-3 rounded-2xl border transition-colors"
-        :class="isAiGenerated ? 'border-green-300 bg-green-50' : 'border-gray-100'">
-        <label class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Harga/Liter</label>
-        <!-- Hapus step="1000", biarkan default atau step="1" -->
-        <input type="number" name="price_per_liter" x-model="price" required step="1"
-            class="w-full bg-transparent font-bold text-sm focus:outline-none py-1">
-    </div>
-    <div class="bg-gray-50 p-3 rounded-2xl border transition-colors"
-    :class="isAiGenerated ? 'border-green-300 bg-green-50' : 'border-gray-100'">
-    <label class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Liter</label>
-    <!-- Ubah step="0.01" menjadi step="0.001" atau step="any" -->
-    <input type="number" step="0.001" name="liters" x-model="liters" required
-        class="w-full bg-transparent font-bold text-sm focus:outline-none py-1">
-</div>
-    <div class="bg-gray-100 p-3 rounded-2xl border border-gray-200">
-        <label class="text-[9px] font-bold text-gray-500 uppercase tracking-wider">Total (Rp)</label>
-        <input type="number" name="total_price" :value="total" readonly
-            class="w-full bg-transparent font-bold text-sm focus:outline-none py-1 text-gray-500">
-    </div>
-</div>
-                    {{-- <div class="grid grid-cols-3 gap-2">
+
+                    <div class="grid grid-cols-3 gap-2">
                         <div class="bg-gray-50 p-3 rounded-2xl border transition-colors"
                             :class="isAiGenerated ? 'border-green-300 bg-green-50' : 'border-gray-100'">
                             <label class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Harga/Liter</label>
@@ -410,7 +367,7 @@
                             <input type="number" name="total_price" :value="total" readonly
                                 class="w-full bg-transparent font-bold text-sm focus:outline-none py-1 text-gray-500">
                         </div>
-                    </div> --}}
+                    </div>
 
                     <input type="hidden" name="receipt_image" x-model="receiptImage">
                     <input type="hidden" name="is_ai_generated" x-model="isAiGenerated">

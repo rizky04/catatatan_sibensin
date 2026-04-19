@@ -96,7 +96,6 @@
                 isAiGenerated: false,
                 scanError: null,
                 toast: { show: false, message: '', type: 'success' },
-                fuelTypeMode: 'select',
 
                 get total() {
                     return (this.price && this.liters) ? Math.round(parseFloat(this.price) * parseFloat(this.liters)) : ''
@@ -172,38 +171,15 @@
                             filledCount++;
                         }
 
-                       if (data.fuel_type) {
-    // Gunakan nilai asli dari AI, jangan dipaksa ke Pertalite
-    // Tapi tetap format agar rapi (capitalize first letter of each word)
-    let ft = data.fuel_type.toLowerCase();
-
-    // Mapping untuk produk yang dikenal (opsional, untuk konsistensi)
-    const fuelMappings = {
-        'pertalite': 'Pertalite',
-        'pertamax': 'Pertamax',
-        'pertamax turbo': 'Pertamax Turbo',
-        'dexlite': 'Dexlite',
-        'pertamina dex': 'Pertamina Dex',
-        'shell super': 'Shell Super',
-        'shell v-power': 'Shell V-Power',
-        'shell v power': 'Shell V-Power',
-        'bp 92': 'BP 92',
-        'bp 95': 'BP 95',
-        'vivo revvo 90': 'Vivo Revvo 90',
-        'vivo revvo 95': 'Vivo Revvo 95'
-    };
-
-    // Cek apakah ada di mapping
-    if (fuelMappings[ft]) {
-        this.fuel_type = fuelMappings[ft];
-    } else {
-        // Format manual: capitalize first letter of each word
-        let words = data.fuel_type.split(' ');
-        let formatted = words.map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
-        this.fuel_type = formatted;
-    }
-    filledCount++;
-}
+                        if (data.fuel_type) {
+                            let ft = data.fuel_type.toLowerCase();
+                            if (ft.includes('turbo')) this.fuel_type = 'Pertamax Turbo';
+                            else if (ft.includes('pertamax')) this.fuel_type = 'Pertamax';
+                            else if (ft.includes('dexlite')) this.fuel_type = 'Dexlite';
+                            else if (ft.includes('dex')) this.fuel_type = 'Pertamina Dex';
+                            else this.fuel_type = 'Pertalite';
+                            filledCount++;
+                        }
 
                         this.isAiGenerated = true;
                         this.showNotification(`✓ Berhasil mengisi ${filledCount} field`, 'success');
@@ -321,7 +297,7 @@
                             <input type="text" name="location_name" x-model="location_name"
                                 class="w-full bg-transparent font-bold text-sm focus:outline-none py-1">
                         </div>
-                        {{-- <div class="bg-gray-50 p-4 rounded-2xl border transition-colors"
+                        <div class="bg-gray-50 p-4 rounded-2xl border transition-colors"
                             :class="isAiGenerated ? 'border-green-300 bg-green-50' : 'border-gray-100'">
                             <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Jenis BBM</label>
                             <select name="fuel_type" x-model="fuel_type"
@@ -332,67 +308,10 @@
                                 <option value="Dexlite">Dexlite</option>
                                 <option value="Pertamina Dex">Pertamina Dex</option>
                             </select>
-                        </div> --}}
-                        <div class="bg-gray-50 p-4 rounded-2xl border transition-colors"
-    :class="isAiGenerated ? 'border-green-300 bg-green-50' : 'border-gray-100'">
-    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Jenis BBM</label>
-
-    <!-- Toggle antara pilih atau input manual -->
-    <div class="flex gap-2 mb-2">
-        <button type="button" @click="fuelTypeMode = 'select'"
-            :class="fuelTypeMode === 'select' ? 'bg-gas-green text-white' : 'bg-gray-200 text-gray-600'"
-            class="text-[9px] px-2 py-1 rounded-full transition-colors">
-            Pilih
-        </button>
-        <button type="button" @click="fuelTypeMode = 'manual'"
-            :class="fuelTypeMode === 'manual' ? 'bg-gas-green text-white' : 'bg-gray-200 text-gray-600'"
-            class="text-[9px] px-2 py-1 rounded-full transition-colors">
-            Input Manual
-        </button>
-    </div>
-
-    <!-- Mode Select -->
-    <select x-show="fuelTypeMode === 'select'" name="fuel_type" x-model="fuel_type"
-        class="w-full bg-transparent font-bold text-sm focus:outline-none appearance-none">
-        <option value="Pertalite">Pertalite</option>
-        <option value="Pertamax">Pertamax</option>
-        <option value="Pertamax Turbo">Pertamax Turbo</option>
-        <option value="Dexlite">Dexlite</option>
-        <option value="Pertamina Dex">Pertamina Dex</option>
-        <option value="Shell Super">Shell Super</option>
-        <option value="Shell V-Power">Shell V-Power</option>
-        <option value="BP 92">BP 92</option>
-        <option value="BP 95">BP 95</option>
-    </select>
-
-    <!-- Mode Manual -->
-    <input x-show="fuelTypeMode === 'manual'" type="text" name="fuel_type" x-model="fuel_type"
-        class="w-full bg-transparent font-bold text-sm focus:outline-none py-1"
-        placeholder="Contoh: Pertalite, Shell Super, Diesel, dll">
-</div>
+                        </div>
                     </div>
-<div class="grid grid-cols-3 gap-2">
-    <div class="bg-gray-50 p-3 rounded-2xl border transition-colors"
-        :class="isAiGenerated ? 'border-green-300 bg-green-50' : 'border-gray-100'">
-        <label class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Harga/Liter</label>
-        <!-- Hapus step="1000", biarkan default atau step="1" -->
-        <input type="number" name="price_per_liter" x-model="price" required step="1"
-            class="w-full bg-transparent font-bold text-sm focus:outline-none py-1">
-    </div>
-    <div class="bg-gray-50 p-3 rounded-2xl border transition-colors"
-    :class="isAiGenerated ? 'border-green-300 bg-green-50' : 'border-gray-100'">
-    <label class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Liter</label>
-    <!-- Ubah step="0.01" menjadi step="0.001" atau step="any" -->
-    <input type="number" step="0.001" name="liters" x-model="liters" required
-        class="w-full bg-transparent font-bold text-sm focus:outline-none py-1">
-</div>
-    <div class="bg-gray-100 p-3 rounded-2xl border border-gray-200">
-        <label class="text-[9px] font-bold text-gray-500 uppercase tracking-wider">Total (Rp)</label>
-        <input type="number" name="total_price" :value="total" readonly
-            class="w-full bg-transparent font-bold text-sm focus:outline-none py-1 text-gray-500">
-    </div>
-</div>
-                    {{-- <div class="grid grid-cols-3 gap-2">
+
+                    <div class="grid grid-cols-3 gap-2">
                         <div class="bg-gray-50 p-3 rounded-2xl border transition-colors"
                             :class="isAiGenerated ? 'border-green-300 bg-green-50' : 'border-gray-100'">
                             <label class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Harga/Liter</label>
@@ -410,7 +329,7 @@
                             <input type="number" name="total_price" :value="total" readonly
                                 class="w-full bg-transparent font-bold text-sm focus:outline-none py-1 text-gray-500">
                         </div>
-                    </div> --}}
+                    </div>
 
                     <input type="hidden" name="receipt_image" x-model="receiptImage">
                     <input type="hidden" name="is_ai_generated" x-model="isAiGenerated">

@@ -20,46 +20,44 @@ class AiScanController extends Controller
             $mimeType = $image->getMimeType();
 
             // Prompt khusus untuk struk Indonesia
-            $prompt = "Anda adalah AI khusus untuk membaca struk SPBU (Pertamina) di Indonesia.
+           // Update prompt menjadi lebih fleksibel
+// Update prompt untuk mendukung berbagai SPBU
+$prompt = "Anda adalah AI khusus untuk membaca struk pengisian BBM dari berbagai SPBU/Stasiun Pengisian BBM di Indonesia.
 
 Analisis gambar struk berikut dan ekstrak data dengan format JSON yang valid.
 
+SPBU yang mungkin muncul:
+- PERTAMINA (Pertalite, Pertamax, Pertamax Turbo, Dexlite, Pertamina Dex)
+- SHELL (Shell Super, Shell V-Power, Shell Diesel)
+- BP (BP 92, BP 95, BP Diesel)
+- VIVO (Vivo Revvo 90, Vivo Revvo 95)
+- Atau merek lainnya
+
 Format struk yang umum:
 - Tanggal: Biasanya format DD/MM/YYYY atau DD-MM-YYYY
-- Nama produk: PERTALITE, PERTAMAX, PERTAMAX TURBO, DEXLITE, PERTAMINA DEX
+- Nama produk: Nama BBM sesuai struk
 - Harga/Liter: Angka setelah 'Harga/Liter : Rp.'
 - Volume: Angka setelah 'Volume : (L)' atau 'Liter :'
 - Total Harga: Angka setelah 'Total Harga : Rp.'
 
-Contoh struk:
-PERTAMINA
-SPBU RTA MILONO
-Jl. RTA MILONO PALANGKA RAYA
-Waktu : 24/06/2023 12:42:37
-Nama Produk : PERTALITE
-Harga/Liter : Rp. 10,000
-Volume : (L) 3.00
-Total Harga : Rp. 30,000
-
 KEMBALIKAN HANYA JSON VALID tanpa teks lain, tanpa markdown, tanpa penjelasan.
 
-Format JSON yang diminta:
+Format JSON:
 {
     \"date\": \"YYYY-MM-DD\",
-    \"location_name\": \"Nama SPBU dan lokasi\",
-    \"fuel_type\": \"Pertalite/Pertamax/Pertamax Turbo/Dexlite/Pertamina Dex\",
+    \"location_name\": \"Nama SPBU/Stasiun dan alamat\",
+    \"fuel_type\": \"NAMA BBM PERSIS SEPERTI DI STRUK\",
     \"price_per_liter\": 10000,
     \"liters\": 3.00,
     \"total_price\": 30000
 }
 
-Aturan penting:
-1. date: Konversi dari format DD/MM/YYYY ke YYYY-MM-DD (contoh: 24/06/2023 -> 2023-06-24)
-2. price_per_liter: Hanya angka tanpa titik atau koma (contoh: 10,000 -> 10000)
-3. liters: Angka volume, gunakan titik untuk desimal (contoh: 3.00)
-4. total_price: Hanya angka tanpa titik atau koma (contoh: 30,000 -> 30000)
-5. location_name: Gabungkan nama SPBU dan alamatnya
-6. Jika ada data yang tidak ditemukan, gunakan null
+Aturan:
+1. date: Konversi DD/MM/YYYY -> YYYY-MM-DD
+2. price_per_liter & total_price: Hanya angka tanpa titik/koma
+3. liters: Angka desimal dengan titik
+4. fuel_type: Ambil NAMA PRODUK PERSIS seperti di struk (contoh: PERTALITE, SHELL SUPER, BP 92, VIVO REVVO 95)
+5. location_name: Nama dan alamat SPBU/Stasiun
 
 KEMBALIKAN HANYA JSON!";
 
@@ -160,95 +158,120 @@ KEMBALIKAN HANYA JSON!";
         }
     }
 
-    private function manualExtractFromText($text)
-    {
-        $data = [
-            'date' => null,
-            'location_name' => null,
-            'fuel_type' => null,
-            'price_per_liter' => null,
-            'liters' => null,
-            'total_price' => null
+   private function manualExtractFromText($text)
+{
+    $data = [
+        'date' => null,
+        'location_name' => null,
+        'fuel_type' => null,
+        'price_per_liter' => null,
+        'liters' => null,
+        'total_price' => null
+    ];
+
+    // Extract tanggal (format: DD-MMM-YYYY seperti 30-Oct-2025)
+    if (preg_match('/(\d{2})-([A-Za-z]{3})-(\d{4})/', $text, $matches)) {
+        $monthMap = [
+            'Jan' => '01', 'Feb' => '02', 'Mar' => '03', 'Apr' => '04',
+            'May' => '05', 'Jun' => '06', 'Jul' => '07', 'Aug' => '08',
+            'Sep' => '09', 'Oct' => '10', 'Nov' => '11', 'Dec' => '12'
         ];
-
-        // Extract tanggal (format: DD/MM/YYYY atau DD-MM-YYYY)
-        if (preg_match('/(\d{2})[\/\-](\d{2})[\/\-](\d{4})/', $text, $matches)) {
-            $data['date'] = "{$matches[3]}-{$matches[2]}-{$matches[1]}";
-        }
-
-        // Extract lokasi (ambil baris setelah PERTAMINA)
-        if (preg_match('/PERTAMINA\s+([^\n]+)\s+([^\n]+)/', $text, $matches)) {
-            $data['location_name'] = trim($matches[1] . ' ' . $matches[2]);
-        }
-
-        // Extract fuel type
-        if (preg_match('/Nama Produk\s*:\s*([A-Z\s]+)/i', $text, $matches)) {
-            $fuel = trim($matches[1]);
-            $fuel = str_replace('PERTALITE', 'Pertalite', $fuel);
-            $fuel = str_replace('PERTAMAX', 'Pertamax', $fuel);
-            $fuel = str_replace('PERTAMAX TURBO', 'Pertamax Turbo', $fuel);
-            $fuel = str_replace('DEXLITE', 'Dexlite', $fuel);
-            $data['fuel_type'] = $fuel;
-        }
-
-        // Extract price per liter
-        if (preg_match('/Harga\/Liter\s*:\s*Rp\.?\s*([\d\.,]+)/i', $text, $matches)) {
-            $price = str_replace(['.', ','], ['', '.'], $matches[1]);
-            $data['price_per_liter'] = (int) floatval($price);
-        }
-
-        // Extract liters
-        if (preg_match('/Volume\s*:\s*\(L\)\s*([\d\.,]+)/i', $text, $matches)) {
-            $liters = str_replace(',', '.', $matches[1]);
-            $data['liters'] = (float) $liters;
-        } elseif (preg_match('/Liter\s*:\s*([\d\.,]+)/i', $text, $matches)) {
-            $liters = str_replace(',', '.', $matches[1]);
-            $data['liters'] = (float) $liters;
-        }
-
-        // Extract total price
-        if (preg_match('/Total Harga\s*:\s*Rp\.?\s*([\d\.,]+)/i', $text, $matches)) {
-            $total = str_replace(['.', ','], ['', '.'], $matches[1]);
-            $data['total_price'] = (int) floatval($total);
-        }
-
-        return $data;
+        $month = $monthMap[$matches[2]] ?? '01';
+        $data['date'] = "{$matches[3]}-{$month}-{$matches[1]}";
+    }
+    // Fallback format DD/MM/YYYY
+    elseif (preg_match('/(\d{2})[\/\-](\d{2})[\/\-](\d{4})/', $text, $matches)) {
+        $data['date'] = "{$matches[3]}-{$matches[2]}-{$matches[1]}";
     }
 
-    private function validateAndConvertData($data)
-    {
-        // Konversi date ke format YYYY-MM-DD
-        if ($data['date']) {
-            try {
-                $date = \Carbon\Carbon::parse($data['date']);
-                $data['date'] = $date->format('Y-m-d');
-            } catch (\Exception $e) {
-                $data['date'] = date('Y-m-d');
-            }
-        } else {
+    // Extract lokasi (BPAKR MINANGKABAU)
+    if (preg_match('/([A-Z\s]+MINANGKABAU|[A-Z\s]+SPBU)/i', $text, $matches)) {
+        $data['location_name'] = trim($matches[1]);
+    }
+
+    // Extract fuel type (BP 92)
+    if (preg_match('/(BP\s*\d+)/i', $text, $matches)) {
+        $data['fuel_type'] = trim($matches[1]);
+    }
+
+    // PERBAIKAN: Extract dari format tabel (Product | Qty | Price | Amount)
+    // Qty: 3.702 (3 digit desimal), Price: 12.890, Amount: 47.719
+    if (preg_match('/(?:BP\s*\d+|[A-Z\s]+)\s+([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)/i', $text, $matches)) {
+        // Liter (Qty) - pertahankan semua desimal
+        $data['liters'] = (float) $matches[1];
+        // Harga per liter (Price)
+        $data['price_per_liter'] = str_replace('.', '', $matches[2]);
+        // Total harga (Amount)
+        $data['total_price'] = str_replace('.', '', $matches[3]);
+    }
+
+    // Fallback: Extract liters
+    if (!$data['liters'] && preg_match('/(?:Qty|Volume|Liter)[:\s]+([\d\.]+)/i', $text, $matches)) {
+        $data['liters'] = (float) $matches[1];
+    }
+
+    return $data;
+}
+
+private function validateAndConvertData($data)
+{
+    // Konversi date ke format YYYY-MM-DD
+    if ($data['date']) {
+        try {
+            $date = \Carbon\Carbon::parse($data['date']);
+            $data['date'] = $date->format('Y-m-d');
+        } catch (\Exception $e) {
             $data['date'] = date('Y-m-d');
         }
-
-        // Validasi fuel_type
-        $validFuels = ['Pertalite', 'Pertamax', 'Pertamax Turbo', 'Dexlite', 'Pertamina Dex'];
-        if ($data['fuel_type'] && !in_array($data['fuel_type'], $validFuels)) {
-            if (stripos($data['fuel_type'], 'pertalite') !== false) $data['fuel_type'] = 'Pertalite';
-            elseif (stripos($data['fuel_type'], 'pertamax turbo') !== false) $data['fuel_type'] = 'Pertamax Turbo';
-            elseif (stripos($data['fuel_type'], 'pertamax') !== false) $data['fuel_type'] = 'Pertamax';
-            elseif (stripos($data['fuel_type'], 'dex') !== false) $data['fuel_type'] = 'Pertamina Dex';
-            else $data['fuel_type'] = 'Pertalite';
-        }
-
-        // Konversi tipe data
-        $data['price_per_liter'] = $data['price_per_liter'] ? (int) $data['price_per_liter'] : null;
-        $data['liters'] = $data['liters'] ? (float) $data['liters'] : null;
-        $data['total_price'] = $data['total_price'] ? (int) $data['total_price'] : null;
-
-        // Hitung total jika tidak ada tapi price dan liters ada
-        if (!$data['total_price'] && $data['price_per_liter'] && $data['liters']) {
-            $data['total_price'] = $data['price_per_liter'] * $data['liters'];
-        }
-
-        return $data;
+    } else {
+        $data['date'] = date('Y-m-d');
     }
+
+    // Fuel type
+    if (empty($data['fuel_type'])) {
+        $data['fuel_type'] = 'Tidak diketahui';
+    } else {
+        $data['fuel_type'] = trim($data['fuel_type']);
+        $data['fuel_type'] = ucwords(strtolower($data['fuel_type']));
+    }
+
+    // Parse price (hapus titik)
+    if ($data['price_per_liter']) {
+        if (is_string($data['price_per_liter'])) {
+            $cleaned = str_replace('.', '', $data['price_per_liter']);
+            $data['price_per_liter'] = (int) $cleaned;
+        } else {
+            $data['price_per_liter'] = (int) $data['price_per_liter'];
+        }
+    }
+
+    // Parse total price
+    if ($data['total_price']) {
+        if (is_string($data['total_price'])) {
+            $cleaned = str_replace('.', '', $data['total_price']);
+            $data['total_price'] = (int) $cleaned;
+        } else {
+            $data['total_price'] = (int) $data['total_price'];
+        }
+    }
+
+    // PERBAIKAN: Parse liters dengan presisi penuh (3 desimal)
+    if ($data['liters']) {
+        if (is_string($data['liters'])) {
+            // Ganti koma dengan titik jika ada
+            $liters = str_replace(',', '.', $data['liters']);
+            $data['liters'] = (float) $liters;
+        } else {
+            $data['liters'] = (float) $data['liters'];
+        }
+    }
+
+    // Hitung total jika tidak ada
+    if (!$data['total_price'] && $data['price_per_liter'] && $data['liters']) {
+        $data['total_price'] = (int) round($data['price_per_liter'] * $data['liters']);
+    }
+
+    return $data;
+}
+
 }
