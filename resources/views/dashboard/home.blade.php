@@ -16,7 +16,7 @@
                 {{ session('success') }}
             </div>
         @endif
-{{--
+        {{--
         <div class="bg-gas-black text-white p-6 rounded-[2.5rem] shadow-xl relative overflow-hidden">
             <div class="relative z-10">
                 <p class="text-xs opacity-60 font-medium">Odometer {{ $vehicle ? $vehicle->name : '' }}</p>
@@ -73,63 +73,71 @@
 
         {{-- card new --}}
 
-<div class="bg-gas-black text-white p-6 rounded-[2.5rem] shadow-xl relative overflow-hidden">
-    <div class="relative z-10">
-        <div class="flex justify-between items-start">
-            <div>
-                <p class="text-xs opacity-60 font-medium">Odometer</p>
-                @if($vehicle)
-                    <h2 class="text-4xl font-black mt-1 tracking-tighter">
-                        {{ number_format($vehicle->odometer_initial, 0, ',', '.') }}
-                        <span class="text-sm font-normal opacity-60">KM</span>
-                    </h2>
+        <div class="bg-gas-black text-white p-6 rounded-[2.5rem] shadow-xl relative overflow-hidden">
+            <div class="relative z-10">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs opacity-60 font-medium">Odometer</p>
+                        @if ($vehicle)
+                            <h2 class="text-4xl font-black mt-1 tracking-tighter">
+                                {{ number_format($vehicle->odometer_initial, 0, ',', '.') }}
+                                <span class="text-sm font-normal opacity-60">KM</span>
+                            </h2>
+                        @else
+                            <h2 class="text-4xl font-black mt-1 tracking-tighter">0 <span
+                                    class="text-sm font-normal opacity-60">KM</span></h2>
+                        @endif
+                    </div>
+
+                    @if ($vehicles->count() > 0)
+                        <form action="{{ route('dashboard.switch_vehicle') }}" method="POST" x-data="{ open: false }"
+                            class="relative">
+                            @csrf
+                            <button type="button" @click="open = !open"
+                                class="bg-black/30 backdrop-blur-sm border border-white/20 rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-2">
+                                <span>{{ $vehicle ? $vehicle->name : 'Pilih Kendaraan' }}</span>
+                                <svg class="w-3 h-3" :class="{ 'rotate-180': open }" fill="none"
+                                    stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+
+                            <div x-show="open" @click.away="open = false"
+                                class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg overflow-hidden z-20">
+                                @foreach ($vehicles as $v)
+                                    <button type="submit" name="vehicle_id" value="{{ $v->id }}"
+                                        class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ $v->is_active ? 'bg-gas-green/10 text-gas-green font-bold' : '' }}">
+                                        {{ $v->name }}
+                                        @if ($v->is_active)
+                                            ✓
+                                        @endif
+                                    </button>
+                                @endforeach
+                            </div>
+                        </form>
+                    @endif
+                </div>
+
+                @if ($vehicle)
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <span class="bg-white/10 text-white text-[10px] px-3 py-1 rounded-full font-medium">
+                            {{ $vehicle->license_plate }}
+                        </span>
+                        <span
+                            class="bg-gas-green text-gas-black text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider">
+                            Aktif
+                        </span>
+                    </div>
                 @else
-                    <h2 class="text-4xl font-black mt-1 tracking-tighter">0 <span class="text-sm font-normal opacity-60">KM</span></h2>
+                    <a href="{{ route('vehicles.index') }}"
+                        class="mt-4 inline-block bg-gas-green text-gas-black text-[10px] px-4 py-2 rounded-full font-bold uppercase">
+                        + Daftarkan Kendaraan
+                    </a>
                 @endif
             </div>
-
-            @if($vehicles->count() > 0)
-                <form action="{{ route('dashboard.switch_vehicle') }}" method="POST" x-data="{ open: false }" class="relative">
-                    @csrf
-                    <button type="button" @click="open = !open"
-                        class="bg-black/30 backdrop-blur-sm border border-white/20 rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-2">
-                        <span>{{ $vehicle ? $vehicle->name : 'Pilih Kendaraan' }}</span>
-                        <svg class="w-3 h-3" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                        </svg>
-                    </button>
-
-                    <div x-show="open" @click.away="open = false"
-                        class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg overflow-hidden z-20">
-                        @foreach ($vehicles as $v)
-                            <button type="submit" name="vehicle_id" value="{{ $v->id }}"
-                                class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ $v->is_active ? 'bg-gas-green/10 text-gas-green font-bold' : '' }}">
-                                {{ $v->name }}
-                                @if($v->is_active) ✓ @endif
-                            </button>
-                        @endforeach
-                    </div>
-                </form>
-            @endif
+            <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-gas-green opacity-20 rounded-full"></div>
         </div>
-
-        @if($vehicle)
-            <div class="mt-4 flex flex-wrap gap-2">
-                <span class="bg-white/10 text-white text-[10px] px-3 py-1 rounded-full font-medium">
-                   {{ $vehicle->license_plate }}
-                </span>
-                <span class="bg-gas-green text-gas-black text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider">
-                   Aktif
-                </span>
-            </div>
-        @else
-            <a href="{{ route('vehicles.index') }}" class="mt-4 inline-block bg-gas-green text-gas-black text-[10px] px-4 py-2 rounded-full font-bold uppercase">
-                + Daftarkan Kendaraan
-            </a>
-        @endif
-    </div>
-    <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-gas-green opacity-20 rounded-full"></div>
-</div>
 
         {{-- card new --}}
 
@@ -158,18 +166,34 @@
                         return;
                     }
 
-                    // Validasi ukuran (max 8MB)
-                    if (file.size > 8 * 1024 * 1024) {
-                        this.showNotification('Ukuran gambar maksimal 8MB', 'error');
-                        return;
-                    }
-
                     this.isScanning = true;
                     this.scanError = null;
-                    let formData = new FormData();
-                    formData.append('receipt', file);
 
                     try {
+                        let fileToUpload = file;
+
+                        // ===== KOMPRESI GAMBAR SEBELUM UPLOAD =====
+                        // Cek ukuran file, jika > 1MB maka kompres
+                        if (file.size > 1 * 1024 * 1024) {
+                            console.log(`Mengompres gambar: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+
+                            const options = {
+                                maxSizeMB: 0.5, // Target ukuran 500KB
+                                maxWidthOrHeight: 1024, // Resize ke max 1024px
+                                useWebWorker: true, // Proses di background
+                                fileType: 'image/jpeg',
+                                quality: 0.8
+                            };
+
+                            // Kompres gambar
+                            fileToUpload = await imageCompression(file, options);
+                            console.log(`Hasil kompresi: ${(fileToUpload.size / 1024).toFixed(2)}KB`);
+                        }
+
+                        // Upload file yang sudah dikompres
+                        let formData = new FormData();
+                        formData.append('receipt', fileToUpload);
+
                         const response = await fetch('{{ route('ai.scan') }}', {
                             method: 'POST',
                             headers: {

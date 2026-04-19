@@ -10,6 +10,8 @@
     <title>BBMKU</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.min.js"></script>
+
     <script>
         tailwind.config = {
             theme: {
