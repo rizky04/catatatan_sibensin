@@ -2,7 +2,8 @@
     <div class="max-w-md w-full mx-auto flex-grow flex flex-col p-8">
         <div class="text-center my-12">
             <div class="inline-flex p-4 bg-gas-black rounded-[2rem] text-gas-green shadow-xl mb-4">
-                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                {{-- <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg> --}}
+                <img src="{{ asset('logo.png') }}" class="w-10 h-10" alt="" srcset="">
             </div>
             <h1 class="text-3xl font-black tracking-tighter">Bensin<span class="text-gas-green">Tracker</span></h1>
             <p class="text-gray-500 text-sm mt-2">Kelola bahan bakar lebih cerdas.</p>
