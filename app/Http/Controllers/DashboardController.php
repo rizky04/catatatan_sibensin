@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\FuelEntry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
 
-  private function getActiveVehicle()
+    private function getActiveVehicle()
     {
         $user = Auth::user();
 
@@ -23,12 +24,105 @@ class DashboardController extends Controller
         return $activeVehicle;
     }
 
+    private function getVehicleStats($vehicle)
+    {
+        if (!$vehicle) {
+            return null;
+        }
+
+        $entries = FuelEntry::where('vehicle_id', $vehicle->id)
+            ->where('user_id', Auth::id())
+            ->orderBy('date', 'asc')
+            ->get();
+
+        if ($entries->isEmpty()) {
+            return null;
+        }
+
+        $firstEntry = $entries->first();
+        $lastEntry = $entries->last();
+        $totalKm = $lastEntry->odometer - ($firstEntry->odometer ?? 0);
+        $totalLiter = $entries->sum('liters');
+        $totalCost = $entries->sum('total_price');
+
+        // Hitung rata-rata efisiensi
+        $efficiencies = [];
+        $prevOdometer = null;
+        $prevLiters = null;
+
+        foreach ($entries as $entry) {
+            if ($prevOdometer !== null && $prevLiters !== null) {
+                $distance = $entry->odometer - $prevOdometer;
+                if ($distance > 0 && $prevLiters > 0) {
+                    $efficiencies[] = $distance / $prevLiters;
+                }
+            }
+            $prevOdometer = $entry->odometer;
+            $prevLiters = $entry->liters;
+        }
+
+        $avgEfficiency = !empty($efficiencies) ? array_sum($efficiencies) / count($efficiencies) : 0;
+
+        return [
+            'total_km' => $totalKm,
+            'total_liter' => $totalLiter,
+            'total_cost' => $totalCost,
+            'avg_km_per_liter' => $totalLiter > 0 ? $totalKm / $totalLiter : 0,
+            'avg_efficiency' => $avgEfficiency,
+            'entries_count' => $entries->count(),
+        ];
+    }
+
+    private function getRecentEntries($vehicle, $limit = 5)
+    {
+        if (!$vehicle) {
+            return collect();
+        }
+
+        return FuelEntry::where('vehicle_id', $vehicle->id)
+            ->where('user_id', Auth::id())
+            ->orderBy('date', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->get();
+    }
+
     public function index()
     {
-         $vehicles = Auth::user()->vehicles()->latest()->get();
+        $vehicles = Auth::user()->vehicles()->latest()->get();
         $vehicle = $this->getActiveVehicle();
-        return view('dashboard.home', compact('vehicle','vehicles'));
+
+        // Get statistics for active vehicle
+        $stats = $this->getVehicleStats($vehicle);
+
+        // Get recent entries for active vehicle
+        $recentEntries = $this->getRecentEntries($vehicle);
+
+        return view('dashboard.home', compact('vehicle', 'vehicles', 'stats', 'recentEntries'));
     }
+
+
+//   private function getActiveVehicle()
+//     {
+//         $user = Auth::user();
+
+//         // Cari kendaraan yang is_active-nya true
+//         $activeVehicle = $user->vehicles()->where('is_active', true)->first();
+
+//         // Kalau tidak ada yang aktif (misal baru pertama kali tambah), ambil yang terbaru saja
+//         if (!$activeVehicle) {
+//             $activeVehicle = $user->vehicles()->latest()->first();
+//         }
+
+//         return $activeVehicle;
+//     }
+
+//     public function index()
+//     {
+//          $vehicles = Auth::user()->vehicles()->latest()->get();
+//         $vehicle = $this->getActiveVehicle();
+//         return view('dashboard.home', compact('vehicle','vehicles'));
+//     }
 
     public function history()
     {

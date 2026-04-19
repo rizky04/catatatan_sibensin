@@ -16,11 +16,13 @@
             <span class="text-[9px] font-medium">Riwayat</span>
         </a>
 
-        <a href="{{ route('fuel.create') }}" class="flex flex-col items-center gap-1 py-2 rounded-xl transition-all {{ request()->routeIs('fuel.create') ? 'text-gas-green bg-green-50' : 'text-gray-400 hover:bg-gray-50' }}">
-            <svg class="w-5 h-5" fill="{{ request()->routeIs('fuel.create') ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-            </svg>
-            <span class="text-[9px] font-medium">Catat</span>
+        <!-- Tombol Tambah Pengisian (Floating di tengah) -->
+        <a href="{{ route('fuel.create') }}" class="relative -top-6">
+            <div class="bg-gas-green text-white p-3 rounded-full shadow-lg border-4 border-white active:scale-95 transition-transform">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+            </div>
         </a>
 
         <a href="{{ route('chatbot.index') }}" class="flex flex-col items-center gap-1 py-2 rounded-xl transition-all {{ request()->routeIs('chatbot.*') ? 'text-gas-green bg-green-50' : 'text-gray-400 hover:bg-gray-50' }}">

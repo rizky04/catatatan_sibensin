@@ -24,7 +24,14 @@ class FuelEntryController extends Controller
      */
     public function create()
     {
-        //
+       $user = Auth::user();
+    $vehicle = Vehicle::where('user_id', $user->id)->where('is_active', true)->first();
+
+    if (!$vehicle) {
+        return redirect()->route('vehicles.index')->with('error', 'Pilih kendaraan terlebih dahulu');
+    }
+
+    return view('fuel.create', compact('vehicle'));
     }
 
     /**
