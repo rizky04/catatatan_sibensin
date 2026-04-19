@@ -6,7 +6,7 @@
             <p class="text-sm text-gray-400 font-medium">{{ Auth::user()->email }}</p>
         </div>
 
-        <div class="bg-white p-5 rounded-3xl border border-gray-100 text-left shadow-sm">
+        {{-- <div class="bg-white p-5 rounded-3xl border border-gray-100 text-left shadow-sm">
     <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Kendaraan Utama</h3>
 
     <form action="{{ route('dashboard.switch_vehicle') }}" method="POST">
@@ -25,7 +25,7 @@
             </div>
         </div>
     </form>
-</div>
+</div> --}}
 
         <div class="space-y-2">
             <a href="{{ route('profile.edit') }}" class="w-full bg-white p-5 rounded-3xl border border-gray-100 flex items-center justify-between hover:bg-gray-50 transition-colors text-left">

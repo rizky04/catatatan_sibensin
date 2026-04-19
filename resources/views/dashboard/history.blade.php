@@ -12,6 +12,7 @@
         filterEndDate: '',
         showFilter: false,
 
+
         get total() { return (this.price && this.liters) ? Math.round(this.price * this.liters) : '' },
 
         clearFilter() {
@@ -222,83 +223,87 @@
             </div>
         </section>
 
-        <!-- Modal Edit -->
-        <div x-show="editModalOpen" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div class="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
 
-                <div x-show="editModalOpen" x-transition.opacity class="fixed inset-0 bg-gray-900 bg-opacity-60 backdrop-blur-sm transition-opacity" @click="editModalOpen = false"></div>
+<!-- Modal Edit -->
+<div x-show="editModalOpen" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
 
-                <div x-show="editModalOpen"
-                     x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-                     x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                     class="relative bg-white rounded-[2rem] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:max-w-lg w-full p-6 z-50">
+        <div x-show="editModalOpen" x-transition.opacity class="fixed inset-0 bg-gray-900 bg-opacity-60 backdrop-blur-sm transition-opacity" @click="editModalOpen = false"></div>
 
-                    <header class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-black text-gas-black">Edit Riwayat</h2>
-                        <button @click="editModalOpen = false" class="text-gray-400 hover:text-gas-black transition-colors">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                        </button>
-                    </header>
+        <div x-show="editModalOpen"
+             x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+             class="relative bg-white rounded-[2rem] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:max-w-lg w-full p-6 z-50">
 
-                    <form method="POST" :action="editUrl" class="space-y-3">
-                        @csrf
-                        @method('PUT')
+            <header class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-black text-gas-black">Edit Riwayat</h2>
+                <button @click="editModalOpen = false" class="text-gray-400 hover:text-gas-black transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </header>
 
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tanggal</label>
-                                <input type="date" name="date" x-model="date" required class="w-full bg-transparent font-bold text-sm focus:outline-none py-1">
-                            </div>
-                            <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Odometer</label>
-                                <input type="number" name="odometer" x-model="odometer" required class="w-full bg-transparent font-bold text-sm focus:outline-none py-1">
-                            </div>
-                        </div>
+            <form method="POST" :action="editUrl" class="space-y-3">
+                @csrf
+                @method('PUT')
 
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Lokasi SPBU</label>
-                                <input type="text" name="location_name" x-model="location_name" class="w-full bg-transparent font-bold text-sm focus:outline-none py-1">
-                            </div>
-                            <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Jenis BBM</label>
-                                <select name="fuel_type" x-model="fuel_type" class="w-full bg-transparent font-bold text-sm focus:outline-none appearance-none">
-                                    <option value="Pertalite">Pertalite</option>
-                                    <option value="Pertamax">Pertamax</option>
-                                    <option value="Pertamax Turbo">Pertamax Turbo</option>
-                                    <option value="Dexlite">Dexlite</option>
-                                    <option value="Pertamina Dex">Pertamina Dex</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-3 gap-2">
-                            <div class="bg-gray-50 p-3 rounded-2xl border border-gray-100">
-                                <label class="text-[9px] font-bold text-gray-400 uppercase">Harga/Ltr</label>
-                                <input type="number" name="price_per_liter" x-model="price" required class="w-full bg-transparent font-bold text-sm focus:outline-none py-1">
-                            </div>
-                            <div class="bg-gray-50 p-3 rounded-2xl border border-gray-100">
-                                <label class="text-[9px] font-bold text-gray-400 uppercase">Liter</label>
-                                <input type="number" step="0.01" name="liters" x-model="liters" required class="w-full bg-transparent font-bold text-sm focus:outline-none py-1">
-                            </div>
-                            <div class="bg-gray-100 p-3 rounded-2xl border border-gray-200">
-                                <label class="text-[9px] font-bold text-gray-500 uppercase">Total (Rp)</label>
-                                <input type="number" name="total_price" :value="total" readonly class="w-full bg-transparent font-bold text-sm focus:outline-none py-1 text-gray-600">
-                            </div>
-                        </div>
-
-                        <div class="pt-4 flex gap-3">
-                            <button type="button" @click="editModalOpen = false" class="w-full bg-gray-100 text-gray-600 font-black py-4 rounded-2xl hover:bg-gray-200 transition-colors text-sm tracking-wider">
-                                BATAL
-                            </button>
-                            <button type="submit" class="w-full bg-gas-black text-white font-black py-4 rounded-2xl shadow-lg active:scale-[0.98] transition-transform text-sm tracking-wider">
-                                SIMPAN
-                            </button>
-                        </div>
-                    </form>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tanggal</label>
+                        <input type="date" name="date" x-model="date" required class="w-full bg-transparent font-bold text-sm focus:outline-none py-1">
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Odometer (KM)</label>
+                        <input type="number" name="odometer" x-model="odometer" required step="1" class="w-full bg-transparent font-bold text-sm focus:outline-none py-1">
+                    </div>
                 </div>
-            </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Lokasi SPBU</label>
+                        <input type="text" name="location_name" x-model="location_name" class="w-full bg-transparent font-bold text-sm focus:outline-none py-1" placeholder="Contoh: SPBU Pertamina, Shell, BP">
+                    </div>
+
+                    <!-- JENIS BBM - Langsung input teks (tanpa select) -->
+                    <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Jenis BBM</label>
+                        <input type="text" name="fuel_type" x-model="fuel_type"
+                            class="w-full bg-transparent font-bold text-sm focus:outline-none py-1"
+                            placeholder="Contoh: Pertalite, Shell Super, BP 92, Diesel">
+                        <p class="text-[8px] text-gray-400 mt-1">Isi manual sesuai jenis BBM</p>
+                    </div>
+                </div>
+
+                <!-- Grid 3 kolom -->
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="bg-gray-50 p-3 rounded-2xl border border-gray-100">
+                        <label class="text-[9px] font-bold text-gray-400 uppercase">Harga/Liter</label>
+                        <input type="number" name="price_per_liter" x-model="price" required step="1"
+                            class="w-full bg-transparent font-bold text-sm focus:outline-none py-1">
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-2xl border border-gray-100">
+                        <label class="text-[9px] font-bold text-gray-400 uppercase">Liter</label>
+                        <input type="number" step="0.001" name="liters" x-model="liters" required
+                            class="w-full bg-transparent font-bold text-sm focus:outline-none py-1">
+                    </div>
+                    <div class="bg-gray-100 p-3 rounded-2xl border border-gray-200">
+                        <label class="text-[9px] font-bold text-gray-500 uppercase">Total (Rp)</label>
+                        <input type="number" name="total_price" :value="total" readonly
+                            class="w-full bg-transparent font-bold text-sm focus:outline-none py-1 text-gray-600">
+                    </div>
+                </div>
+
+                <div class="pt-4 flex gap-3">
+                    <button type="button" @click="editModalOpen = false" class="w-full bg-gray-100 text-gray-600 font-black py-4 rounded-2xl hover:bg-gray-200 transition-colors text-sm tracking-wider">
+                        BATAL
+                    </button>
+                    <button type="submit" class="w-full bg-gas-black text-white font-black py-4 rounded-2xl shadow-lg active:scale-[0.98] transition-transform text-sm tracking-wider">
+                        SIMPAN
+                    </button>
+                </div>
+            </form>
         </div>
+    </div>
+</div>
     </div>
 
     <x-bottom-nav />
