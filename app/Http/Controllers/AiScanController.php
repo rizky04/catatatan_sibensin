@@ -11,7 +11,7 @@ class AiScanController extends Controller
     public function scan(Request $request)
     {
         $request->validate([
-            'receipt' => 'required|image|max:10120',
+            'receipt' => 'required|image|max:8120',
         ]);
 
         try {
