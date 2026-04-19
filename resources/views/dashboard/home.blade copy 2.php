@@ -16,8 +16,63 @@
                 {{ session('success') }}
             </div>
         @endif
+        {{--
+        <div class="bg-gas-black text-white p-6 rounded-[2.5rem] shadow-xl relative overflow-hidden">
+            <div class="relative z-10">
+                <p class="text-xs opacity-60 font-medium">Odometer {{ $vehicle ? $vehicle->name : '' }}</p>
+
+                @if ($vehicle)
+                    <h2 class="text-4xl font-black mt-1 tracking-tighter">
+                        {{ number_format($vehicle->odometer_initial, 0, ',', '.') }}
+                        <span class="text-sm font-normal opacity-60">KM</span>
+                    </h2>
+                    <div class="mt-6 flex gap-2">
+                        <span
+                            class="bg-gas-green text-gas-black text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider">
+                            {{ $vehicle->name }} • {{ $vehicle->license_plate }} • Aktif
+                        </span>
+                    </div>
+                @else
+                    <h2 class="text-4xl font-black mt-1 tracking-tighter">0 <span
+                            class="text-sm font-normal opacity-60">KM</span></h2>
+                    <a href="{{ route('vehicles.index') }}"
+                        class="mt-4 inline-block bg-red-500 text-white text-[10px] px-4 py-2 rounded-full font-bold uppercase">
+                        + Daftarkan Kendaraan
+                    </a>
+                @endif
+            </div>
+            <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-gas-green opacity-20 rounded-full"></div>
+        </div>
+
+        <div class="bg-white p-5 rounded-3xl border border-gray-100 text-left shadow-sm">
+            <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Kendaraan Utama</h3>
+
+            <form action="{{ route('dashboard.switch_vehicle') }}" method="POST">
+                @csrf
+                <div class="relative">
+                    <select name="vehicle_id" onchange="this.form.submit()"
+                        class="w-full bg-gray-50 border border-gray-100 text-gas-black font-bold text-sm rounded-2xl p-4 focus:outline-none appearance-none cursor-pointer">
+                        @forelse ($vehicles as $v)
+                            <option value="{{ $v->id }}" {{ $v->is_active ? 'selected' : '' }}>
+                                {{ $v->name }} {{ $v->is_active ? '(Aktif)' : '' }}
+                            </option>
+                        @empty
+                            <option value="">Tidak ada kendaraan yang tersedia</option>
+                        @endforelse
+                    </select>
+                    <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none">
+                        <svg class="w-4 h-4 text-gas-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
+                    </div>
+                </div>
+            </form>
+        </div> --}}
+
 
         {{-- card new --}}
+
         <div class="bg-gas-black text-white p-6 rounded-[2.5rem] shadow-xl relative overflow-hidden">
             <div class="relative z-10">
                 <div class="flex justify-between items-start">
@@ -84,7 +139,8 @@
             <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-gas-green opacity-20 rounded-full"></div>
         </div>
 
-        {{-- Form Input --}}
+        {{-- card new --}}
+
         <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm space-y-4 mb-20 relative"
             x-data="{
                 price: '',
@@ -95,21 +151,16 @@
                 isScanning: false,
                 isAiGenerated: false,
                 scanError: null,
-                toast: { show: false, message: '', type: 'success' },
 
                 get total() {
                     return (this.price && this.liters) ? Math.round(parseFloat(this.price) * parseFloat(this.liters)) : ''
-                },
-
-                showNotification(message, type = 'success') {
-                    this.toast = { show: true, message: message, type: type };
-                    setTimeout(() => { this.toast.show = false; }, 3000);
                 },
 
                 async scanReceipt(event) {
                     let file = event.target.files[0];
                     if (!file) return;
 
+                    // Validasi tipe file
                     if (!file.type.startsWith('image/')) {
                         this.showNotification('File harus berupa gambar', 'error');
                         return;
@@ -121,17 +172,25 @@
                     try {
                         let fileToUpload = file;
 
+                        // ===== KOMPRESI GAMBAR SEBELUM UPLOAD =====
+                        // Cek ukuran file, jika > 1MB maka kompres
                         if (file.size > 1 * 1024 * 1024) {
+                            console.log(`Mengompres gambar: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+
                             const options = {
-                                maxSizeMB: 0.5,
-                                maxWidthOrHeight: 1024,
-                                useWebWorker: true,
+                                maxSizeMB: 0.5, // Target ukuran 500KB
+                                maxWidthOrHeight: 1024, // Resize ke max 1024px
+                                useWebWorker: true, // Proses di background
                                 fileType: 'image/jpeg',
                                 quality: 0.8
                             };
+
+                            // Kompres gambar
                             fileToUpload = await imageCompression(file, options);
+                            console.log(`Hasil kompresi: ${(fileToUpload.size / 1024).toFixed(2)}KB`);
                         }
 
+                        // Upload file yang sudah dikompres
                         let formData = new FormData();
                         formData.append('receipt', fileToUpload);
 
@@ -151,7 +210,11 @@
                         }
 
                         const data = result.data;
+
+                        // Reset AI generated flag
                         this.isAiGenerated = false;
+
+                        // Isi data otomatis dengan validasi
                         let filledCount = 0;
 
                         if (data.date && data.date !== 'null') {
@@ -171,6 +234,7 @@
                             filledCount++;
                         }
 
+                        // Mapping fuel type
                         if (data.fuel_type) {
                             let ft = data.fuel_type.toLowerCase();
                             if (ft.includes('turbo')) this.fuel_type = 'Pertamax Turbo';
@@ -182,65 +246,41 @@
                         }
 
                         this.isAiGenerated = true;
-                        this.showNotification(`✓ Berhasil mengisi ${filledCount} field`, 'success');
+
+                        // Tampilkan notifikasi sukses
+                        this.showNotification(`✓ Berhasil mengisi ${filledCount} field dari struk!`, 'success');
 
                     } catch (e) {
                         console.error('Scan error:', e);
                         this.scanError = e.message;
-                        this.showNotification(e.message, 'error');
+                        this.showNotification('Gagal membaca struk: ' + e.message, 'error');
                         this.isAiGenerated = false;
                     } finally {
                         this.isScanning = false;
+                        // Reset file input
                         event.target.value = '';
+
+                        // Auto hide error after 5 seconds
                         if (this.scanError) {
                             setTimeout(() => { this.scanError = null; }, 5000);
                         }
                     }
+                },
+
+                showNotification(message, type = 'info') {
+                    // Gunakan alert sementara, bisa diganti dengan toast notification
+                    alert(message);
                 }
             }" @buka-kamera.window="$refs.fileInput.click()">
 
-            <!-- Toast Notification Minimalis Modern -->
-            <div x-show="toast.show"
-                 x-transition:enter="transform ease-out duration-300 transition"
-                 x-transition:enter-start="translate-y-2 opacity-0"
-                 x-transition:enter-end="translate-y-0 opacity-100"
-                 x-transition:leave="transition ease-in duration-200"
-                 x-transition:leave-start="opacity-100"
-                 x-transition:leave-end="opacity-0"
-                 class="fixed bottom-24 left-4 right-4 z-50"
-                 style="display: none;">
-                <div class="rounded-2xl px-4 py-3 shadow-xl flex items-center gap-3 backdrop-blur-md"
-                     :class="{
-                         'bg-green-500': toast.type === 'success',
-                         'bg-red-500': toast.type === 'error'
-                     }">
-                    <!-- Icon -->
-                    <div class="flex-shrink-0">
-                        <svg x-show="toast.type === 'success'" class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        <svg x-show="toast.type === 'error'" class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </div>
-                    <!-- Message -->
-                    <p class="flex-1 text-sm font-medium text-white" x-text="toast.message"></p>
-                    <!-- Tombol Close -->
-                    <button @click="toast.show = false" class="flex-shrink-0">
-                        <svg class="w-4 h-4 text-white/80 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
             <!-- Loading Overlay -->
             <div x-show="isScanning" x-transition.opacity
-                class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex flex-col items-center justify-center text-white"
+                class="fixed inset-0 bg-gas-black/80 backdrop-blur-sm z-[60] flex flex-col items-center justify-center text-white"
                 style="display: none;">
-                <div class="w-14 h-14 border-4 border-gas-green border-t-transparent rounded-full animate-spin mb-4">
+                <div class="w-16 h-16 border-4 border-gas-green border-t-transparent rounded-full animate-spin mb-4">
                 </div>
-                <p class="font-semibold tracking-wide animate-pulse">Menganalisa Struk...</p>
+                <p class="font-bold tracking-widest animate-pulse">MENGANALISA STRUK...</p>
+                {{-- <p class="text-[10px] opacity-60 mt-2">Gemini 2.0 Flash AI sedang bekerja</p> --}}
             </div>
 
             <!-- Error Notification -->
@@ -252,6 +292,15 @@
             <h3 class="font-bold text-lg">Input Bensin</h3>
 
             <!-- Tombol Scan Struk -->
+            {{-- <button type="button"
+                @click="$refs.fileInput.click()"
+                class="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white font-black py-3 rounded-2xl shadow-lg active:scale-[0.98] transition-transform flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                📸 Scan Struk dengan AI
+            </button> --}}
             <button type="button" @click="$refs.fileInput.click()"
                 class="w-full bg-gas-green hover:bg-green-600 text-white font-black py-3 rounded-2xl shadow-lg shadow-green-100 active:scale-[0.98] transition-transform flex items-center justify-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -272,34 +321,98 @@
                 <input type="file" x-ref="fileInput" accept="image/*" capture="environment" class="hidden"
                     @change="scanReceipt">
 
-                <form action="{{ route('fuel.store') }}" method="POST" class="space-y-4" enctype="multipart/form-data">
+                {{-- <form action="{{ route('fuel.store') }}" method="POST" class="space-y-4">
                     @csrf
                     <input type="hidden" name="vehicle_id" value="{{ $vehicle->id }}">
 
                     <div class="grid grid-cols-2 gap-3">
                         <div class="bg-gray-50 p-4 rounded-2xl border transition-colors"
-                            :class="isAiGenerated ? 'border-green-300 bg-green-50' : 'border-gray-100'">
+                            :class="isAiGenerated ? 'border-purple-300 bg-purple-50 ring-1 ring-purple-200' : 'border-gray-100'">
                             <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tanggal</label>
-                            <input type="date" name="date" x-model="date" required
-                                class="w-full bg-transparent font-bold text-sm focus:outline-none py-1">
+                            <input type="date" name="date" x-model="date" required class="w-full bg-transparent font-bold text-sm focus:outline-none py-1 border-none focus:ring-0 text-gas-black">
                         </div>
-                        <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Odometer (KM)</label>
-                            <input type="number" name="odometer" required placeholder="{{ $vehicle->odometer_initial }}"
-                                class="w-full bg-transparent font-bold text-sm focus:outline-none py-1">
+                        <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100 relative">
+                            <span class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Odometer</label>
+                            <input type="number" name="odometer" required placeholder="{{ $vehicle->odometer_initial }}" class="w-full bg-transparent font-bold text-sm focus:outline-none py-1 border-none focus:ring-0 text-gas-black">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
                         <div class="bg-gray-50 p-4 rounded-2xl border transition-colors"
-                            :class="isAiGenerated ? 'border-green-300 bg-green-50' : 'border-gray-100'">
+                            :class="isAiGenerated ? 'border-purple-300 bg-purple-50' : 'border-gray-100'">
                             <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Lokasi SPBU</label>
+                            <input type="text" name="location_name" x-model="location_name" placeholder="..." class="w-full bg-transparent font-bold text-sm focus:outline-none py-1 border-none focus:ring-0 text-gas-black">
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-2xl border transition-colors"
+                            :class="isAiGenerated ? 'border-purple-300 bg-purple-50' : 'border-gray-100'">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Jenis BBM</label>
+                            <select name="fuel_type" x-model="fuel_type" class="w-full bg-transparent font-bold text-sm focus:outline-none appearance-none border-none focus:ring-0 text-gas-black cursor-pointer">
+                                <option value="Pertalite">Pertalite</option>
+                                <option value="Pertamax">Pertamax</option>
+                                <option value="Pertamax Turbo">Pertamax Turbo</option>
+                                <option value="Dexlite">Dexlite</option>
+                                <option value="Pertamina Dex">Pertamina Dex</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="bg-gray-50 p-3 rounded-2xl border transition-colors"
+                            :class="isAiGenerated ? 'border-purple-300 bg-purple-50' : 'border-gray-100'">
+                            <label class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Harga/Ltr</label>
+                            <input type="number" name="price_per_liter" x-model="price" required placeholder="Rp" class="w-full bg-transparent font-bold text-sm focus:outline-none py-1 border-none focus:ring-0 text-gas-black">
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-2xl border transition-colors"
+                            :class="isAiGenerated ? 'border-purple-300 bg-purple-50' : 'border-gray-100'">
+                            <label class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Liter</label>
+                            <input type="number" step="0.01" name="liters" x-model="liters" required placeholder="0.0" class="w-full bg-transparent font-bold text-sm focus:outline-none py-1 border-none focus:ring-0 text-gas-black">
+                        </div>
+                        <div class="bg-gray-100 p-3 rounded-2xl border border-gray-200">
+                            <label class="text-[9px] font-bold text-gray-500 uppercase tracking-wider">Total (Rp)</label>
+                            <input type="number" name="total_price" :value="total" readonly required placeholder="0" class="w-full bg-transparent font-bold text-sm focus:outline-none py-1 border-none focus:ring-0 text-gray-500">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-gas-green text-white font-black py-4 rounded-2xl shadow-lg active:scale-[0.98] transition-transform">
+                        SIMPAN DATA
+                    </button>
+                </form> --}}
+                <form action="{{ route('fuel.store') }}" method="POST" class="space-y-4"
+                    enctype="multipart/form-data">
+                    @csrf
+                    <input type="hidden" name="vehicle_id" value="{{ $vehicle->id }}">
+
+                    <!-- Field yang sudah ada sebelumnya -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-gray-50 p-4 rounded-2xl border transition-colors"
+                            :class="isAiGenerated ? 'border-purple-300 bg-purple-50' : 'border-gray-100'">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tanggal</label>
+                            <input type="date" name="date" x-model="date" required
+                                class="w-full bg-transparent font-bold text-sm focus:outline-none py-1">
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Odometer
+                                (KM)</label>
+                            <input type="number" name="odometer" required
+                                placeholder="{{ $vehicle->odometer_initial }}"
+                                class="w-full bg-transparent font-bold text-sm focus:outline-none py-1">
+                        </div>
+                    </div>
+
+                    <!-- Field lainnya -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-gray-50 p-4 rounded-2xl border transition-colors"
+                            :class="isAiGenerated ? 'border-purple-300 bg-purple-50' : 'border-gray-100'">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Lokasi
+                                SPBU</label>
                             <input type="text" name="location_name" x-model="location_name"
                                 class="w-full bg-transparent font-bold text-sm focus:outline-none py-1">
                         </div>
                         <div class="bg-gray-50 p-4 rounded-2xl border transition-colors"
-                            :class="isAiGenerated ? 'border-green-300 bg-green-50' : 'border-gray-100'">
-                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Jenis BBM</label>
+                            :class="isAiGenerated ? 'border-purple-300 bg-purple-50' : 'border-gray-100'">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Jenis
+                                BBM</label>
                             <select name="fuel_type" x-model="fuel_type"
                                 class="w-full bg-transparent font-bold text-sm focus:outline-none appearance-none">
                                 <option value="Pertalite">Pertalite</option>
@@ -313,24 +426,27 @@
 
                     <div class="grid grid-cols-3 gap-2">
                         <div class="bg-gray-50 p-3 rounded-2xl border transition-colors"
-                            :class="isAiGenerated ? 'border-green-300 bg-green-50' : 'border-gray-100'">
-                            <label class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Harga/Liter</label>
+                            :class="isAiGenerated ? 'border-purple-300 bg-purple-50' : 'border-gray-100'">
+                            <label
+                                class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Harga/Liter</label>
                             <input type="number" name="price_per_liter" x-model="price" required step="1000"
                                 class="w-full bg-transparent font-bold text-sm focus:outline-none py-1">
                         </div>
                         <div class="bg-gray-50 p-3 rounded-2xl border transition-colors"
-                            :class="isAiGenerated ? 'border-green-300 bg-green-50' : 'border-gray-100'">
+                            :class="isAiGenerated ? 'border-purple-300 bg-purple-50' : 'border-gray-100'">
                             <label class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Liter</label>
                             <input type="number" step="0.01" name="liters" x-model="liters" required
                                 class="w-full bg-transparent font-bold text-sm focus:outline-none py-1">
                         </div>
                         <div class="bg-gray-100 p-3 rounded-2xl border border-gray-200">
-                            <label class="text-[9px] font-bold text-gray-500 uppercase tracking-wider">Total (Rp)</label>
+                            <label class="text-[9px] font-bold text-gray-500 uppercase tracking-wider">Total
+                                (Rp)</label>
                             <input type="number" name="total_price" :value="total" readonly
                                 class="w-full bg-transparent font-bold text-sm focus:outline-none py-1 text-gray-500">
                         </div>
                     </div>
 
+                    <!-- Hidden field untuk receipt_image dan is_ai_generated -->
                     <input type="hidden" name="receipt_image" x-model="receiptImage">
                     <input type="hidden" name="is_ai_generated" x-model="isAiGenerated">
 
