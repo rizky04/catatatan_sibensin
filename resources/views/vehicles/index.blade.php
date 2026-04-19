@@ -6,7 +6,7 @@
             form: { name: '', license_plate: '', fuel_type_default: '', odometer_initial: '' },
             addForm: { name: '', license_plate: '', fuel_type_default: 'Pertalite', odometer_initial: 0 },
             deleteConfirm: false,
-            deleteUrl: '',
+            deleteForm: null,
             toast: { show: false, message: '', type: 'success' },
 
             showNotification(message, type = 'success') {
@@ -14,31 +14,16 @@
                 setTimeout(() => { this.toast.show = false; }, 3000);
             },
 
-            confirmDelete(url) {
-                this.deleteUrl = url;
+            confirmDelete(form) {
+                this.deleteForm = form;
                 this.deleteConfirm = true;
             },
 
             deleteVehicle() {
-                fetch(this.deleteUrl, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    }
-                }).then(response => {
-                    if (response.ok) {
-                        this.showNotification('Kendaraan berhasil dihapus!', 'success');
-                        setTimeout(() => location.reload(), 1500);
-                    } else {
-                        this.showNotification('Gagal menghapus kendaraan', 'error');
-                    }
-                    this.deleteConfirm = false;
-                }).catch(error => {
-                    this.showNotification('Terjadi kesalahan', 'error');
-                    this.deleteConfirm = false;
-                });
+                if (this.deleteForm) {
+                    this.deleteForm.submit();
+                }
+                this.deleteConfirm = false;
             }
          }"
          class="max-w-md w-full mx-auto flex flex-col min-h-screen pb-12 relative">
@@ -177,11 +162,19 @@
                                     <svg class="w-4 h-4 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                 </button>
 
-                                <button type="button"
-                                    @click="confirmDelete('{{ route('vehicles.destroy', $vehicle->id) }}')"
-                                    class="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm hover:bg-red-500/50 transition-colors">
-                                    <svg class="w-4 h-4 text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                </button>
+                                <!-- DELETE FORM - Menggunakan form submit biasa -->
+                                <form method="POST" action="{{ route('vehicles.destroy', $vehicle->id) }}"
+                                      x-ref="deleteForm{{ $vehicle->id }}">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="button"
+                                        @click="confirmDelete($refs.deleteForm{{ $vehicle->id }})"
+                                        class="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm hover:bg-red-500/50 transition-colors">
+                                        <svg class="w-4 h-4 text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </form>
                             </div>
                         </div>
 
