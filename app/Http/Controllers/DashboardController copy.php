@@ -7,6 +7,22 @@ use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
+    // public function index()
+    // {
+    //     // Ambil kendaraan terakhir yang ditambahkan oleh user
+    //     $vehicle = Auth::user()->vehicles()->latest()->first();
+
+    //     // Nanti kalau tabel fuel_entries sudah ada, kita panggil riwayat di sini
+    //     // $recentEntries = $vehicle ? $vehicle->fuelEntries()->latest()->take(5)->get() : [];
+
+    //     // Lempar data $vehicle ke halaman dashboard
+    //     return view('dashboard', compact('vehicle'));
+    // }
+    // public function index()
+    // {
+    //     $vehicle = Auth::user()->vehicles()->latest()->first();
+    //     return view('dashboard.home', compact('vehicle'));
+    // }
 
   private function getActiveVehicle()
     {

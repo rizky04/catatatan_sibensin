@@ -17,29 +17,6 @@
         clearFilter() {
             this.filterStartDate = '';
             this.filterEndDate = '';
-        },
-
-        get filteredEntries() {
-            let entries = [];
-            // Ambil semua elemen entry
-            const entryElements = document.querySelectorAll('[data-entry-id]');
-            let visibleCount = 0;
-
-            entryElements.forEach(el => {
-                const entryDate = el.getAttribute('data-entry-date');
-                const isVisible = (!this.filterStartDate || entryDate >= this.filterStartDate) &&
-                                 (!this.filterEndDate || entryDate <= this.filterEndDate);
-                el.style.display = isVisible ? '' : 'none';
-                if (isVisible) visibleCount++;
-            });
-
-            // Tampilkan pesan jika tidak ada
-            const noDataMsg = document.getElementById('no-data-message');
-            if (noDataMsg) {
-                noDataMsg.style.display = visibleCount === 0 && (this.filterStartDate || this.filterEndDate) ? 'block' : 'none';
-            }
-
-            return visibleCount;
         }
     }">
 
@@ -82,22 +59,22 @@
                     </svg>
                 </button>
 
-                <div x-show="showFilter" x-cloak class="px-4 pb-4 space-y-3">
+                <div x-show="showFilter" x-collapse class="px-4 pb-4 space-y-3">
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Dari Tanggal</label>
-                            <input type="date" x-model="filterStartDate" @change="filteredEntries"
+                            <input type="date" x-model="filterStartDate"
                                 class="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:border-gas-green">
                         </div>
                         <div>
                             <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Sampai Tanggal</label>
-                            <input type="date" x-model="filterEndDate" @change="filteredEntries"
+                            <input type="date" x-model="filterEndDate"
                                 class="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:border-gas-green">
                         </div>
                     </div>
 
                     <div class="flex gap-2 pt-2">
-                        <button @click="clearFilter(); filteredEntries"
+                        <button @click="clearFilter()"
                             class="flex-1 px-3 py-2 bg-gray-100 text-gray-600 text-xs font-bold rounded-xl hover:bg-gray-200 transition-colors">
                             Reset Filter
                         </button>
@@ -110,11 +87,11 @@
             </div>
 
             <!-- Badge Filter Aktif -->
-            <div x-show="filterStartDate || filterEndDate" x-cloak class="flex items-center gap-2">
+            <div x-show="filterStartDate || filterEndDate" x-transition class="flex items-center gap-2">
                 <span class="text-[10px] font-bold text-gas-green bg-green-50 px-2 py-1 rounded-full">
-                    Filter aktif
+                    📅 Filter aktif
                 </span>
-                <button @click="clearFilter(); filteredEntries" class="text-[10px] text-gray-400 hover:text-red-500">
+                <button @click="clearFilter()" class="text-[10px] text-gray-400 hover:text-red-500">
                     ✕ Hapus filter
                 </button>
             </div>
@@ -126,9 +103,13 @@
                     </div>
                 @else
                     @forelse ($entries as $entry)
-                        <div data-entry-id="{{ $entry->id }}"
-                             data-entry-date="{{ $entry->date }}"
-                             class="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm relative overflow-hidden group hover:border-gas-green transition-colors">
+                        <!-- Filtering dijalankan di frontend -->
+                        <div x-show="
+                            (!filterStartDate || new Date('{{ $entry->date }}') >= new Date(filterStartDate)) &&
+                            (!filterEndDate || new Date('{{ $entry->date }}') <= new Date(filterEndDate))
+                        "
+                        x-transition.duration.300ms
+                        class="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm relative overflow-hidden group hover:border-gas-green transition-colors">
 
                             <div class="flex items-center gap-4">
                                 <div class="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center text-gas-green shrink-0">
@@ -203,6 +184,7 @@
                                     </button>
                                 </form>
                             </div>
+
                         </div>
                     @empty
                         <div class="bg-gray-50 border-2 border-dashed border-gray-200 rounded-3xl p-8 text-center">
@@ -212,17 +194,18 @@
                     @endforelse
 
                     <!-- Pesan ketika tidak ada data dalam range filter -->
-                    <div id="no-data-message"
-                         x-show="false"
-                         style="display: none;"
-                         class="text-center py-8 bg-gray-50 rounded-2xl">
-                        <p class="text-sm text-gray-500">Tidak ada transaksi dalam rentang tanggal yang dipilih</p>
+                    <div x-show="filterStartDate || filterEndDate"
+                         x-transition
+                         class="text-center py-8 text-gray-400 text-sm">
+                        <p x-show="[...document.querySelectorAll('[x-show*=\"filterStartDate\"]')].filter(el => el.style.display !== 'none').length === 0">
+                            📭 Tidak ada transaksi dalam rentang tanggal yang dipilih
+                        </p>
                     </div>
                 @endif
             </div>
         </section>
 
-        <!-- Modal Edit -->
+        <!-- Modal Edit (sama seperti sebelumnya) -->
         <div x-show="editModalOpen" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
             <div class="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
 
@@ -247,22 +230,22 @@
                         <div class="grid grid-cols-2 gap-3">
                             <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
                                 <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tanggal</label>
-                                <input type="date" name="date" x-model="date" required class="w-full bg-transparent font-bold text-sm focus:outline-none py-1">
+                                <input type="date" name="date" x-model="date" required class="w-full bg-transparent font-bold text-sm focus:outline-none py-1 border-none focus:ring-0 text-gas-black">
                             </div>
                             <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
                                 <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Odometer</label>
-                                <input type="number" name="odometer" x-model="odometer" required class="w-full bg-transparent font-bold text-sm focus:outline-none py-1">
+                                <input type="number" name="odometer" x-model="odometer" required class="w-full bg-transparent font-bold text-sm focus:outline-none py-1 border-none focus:ring-0 text-gas-black">
                             </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-3">
                             <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
                                 <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Lokasi SPBU</label>
-                                <input type="text" name="location_name" x-model="location_name" class="w-full bg-transparent font-bold text-sm focus:outline-none py-1">
+                                <input type="text" name="location_name" x-model="location_name" class="w-full bg-transparent font-bold text-sm focus:outline-none py-1 border-none focus:ring-0 text-gas-black">
                             </div>
                             <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
                                 <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Jenis BBM</label>
-                                <select name="fuel_type" x-model="fuel_type" class="w-full bg-transparent font-bold text-sm focus:outline-none appearance-none">
+                                <select name="fuel_type" x-model="fuel_type" class="w-full bg-transparent font-bold text-sm focus:outline-none appearance-none border-none focus:ring-0 text-gas-black cursor-pointer">
                                     <option value="Pertalite">Pertalite</option>
                                     <option value="Pertamax">Pertamax</option>
                                     <option value="Pertamax Turbo">Pertamax Turbo</option>
@@ -275,15 +258,15 @@
                         <div class="grid grid-cols-3 gap-2">
                             <div class="bg-gray-50 p-3 rounded-2xl border border-gray-100">
                                 <label class="text-[9px] font-bold text-gray-400 uppercase">Harga/Ltr</label>
-                                <input type="number" name="price_per_liter" x-model="price" required class="w-full bg-transparent font-bold text-sm focus:outline-none py-1">
+                                <input type="number" name="price_per_liter" x-model="price" required class="w-full bg-transparent font-bold text-sm focus:outline-none py-1 border-none focus:ring-0 text-gas-black">
                             </div>
                             <div class="bg-gray-50 p-3 rounded-2xl border border-gray-100">
                                 <label class="text-[9px] font-bold text-gray-400 uppercase">Liter</label>
-                                <input type="number" step="0.01" name="liters" x-model="liters" required class="w-full bg-transparent font-bold text-sm focus:outline-none py-1">
+                                <input type="number" step="0.01" name="liters" x-model="liters" required class="w-full bg-transparent font-bold text-sm focus:outline-none py-1 border-none focus:ring-0 text-gas-black">
                             </div>
                             <div class="bg-gray-100 p-3 rounded-2xl border border-gray-200">
                                 <label class="text-[9px] font-bold text-gray-500 uppercase">Total (Rp)</label>
-                                <input type="number" name="total_price" :value="total" readonly class="w-full bg-transparent font-bold text-sm focus:outline-none py-1 text-gray-600">
+                                <input type="number" name="total_price" :value="total" readonly class="w-full bg-transparent font-bold text-sm focus:outline-none py-1 border-none focus:ring-0 text-gray-600">
                             </div>
                         </div>
 
