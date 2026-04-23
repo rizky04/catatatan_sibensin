@@ -18,6 +18,9 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+Route::get('auth/google', [GoogleAuthController::class, 'redirect'])->name('google.login');
+Route::get('auth/google/callback', [GoogleAuthController::class, 'callback']);
+
 // Ubah route dashboard menjadi seperti ini:
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
@@ -54,8 +57,7 @@ Route::get('/account', [DashboardController::class, 'account'])->name('account')
      Route::get('/chatbot', [ChatbotController::class, 'index'])->name('chatbot.index');
     Route::post('/chatbot/ask', [ChatbotController::class, 'ask'])->name('chatbot.ask');
 
-    Route::get('auth/google', [GoogleAuthController::class, 'redirect'])->name('google.login');
-Route::get('auth/google/callback', [GoogleAuthController::class, 'callback']);
+
 
 });
 
