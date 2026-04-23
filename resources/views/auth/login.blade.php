@@ -61,7 +61,13 @@
             <span class="bg-gray-50 px-4 text-xs text-gray-400 font-bold uppercase relative z-10">Atau gunakan</span>
             <div class="absolute top-1/2 left-0 w-full h-[1px] bg-gray-200"></div>
         </div>
-               <div class="grid grid-cols-2 gap-4 mb-8">
+        <div class="grid grid-cols-1 gap-4 mb-8">
+            <a href="{{ route('google.login') }}" class="flex w-full items-center justify-center gap-2 bg-white border border-gray-100 p-3 rounded-2xl shadow-sm hover:bg-gray-50">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5">
+                <span class="text-xs font-bold uppercase">Google</span>
+            </a>
+        </div>
+               {{-- <div class="grid grid-cols-2 gap-4 mb-8">
             <a href="{{ route('google.login') }}" class="flex items-center justify-center gap-2 bg-white border border-gray-100 p-3 rounded-2xl shadow-sm hover:bg-gray-50">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5">
                 <span class="text-xs font-bold uppercase">Google</span>
@@ -70,7 +76,7 @@
                 <svg class="w-5 h-5 fill-black" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33V21.88C18.343 21.128 22 16.991 22 12c0-5.523-4.477-10-10-10z"></path></svg>
                 <span class="text-xs font-bold uppercase">Apple</span>
             </button>
-        </div>
+        </div> --}}
     </div>
     <div class="p-8 text-center pb-12">
         <p class="text-[10px] text-gray-400 leading-relaxed uppercase font-bold tracking-widest">Dengan melanjutkan, kamu setuju dengan <br><span class="text-gas-green">Syarat & Ketentuan</span> kami.</p>
