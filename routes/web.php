@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FuelEntryController;
 use App\Http\Controllers\AiScanController; // Jangan lupa import di paling atas!
 use App\Http\Controllers\ChatbotController;
+use App\Http\Controllers\Auth\GoogleAuthController;
 
 
 // Route::get('/', function () {
@@ -52,6 +53,9 @@ Route::get('/account', [DashboardController::class, 'account'])->name('account')
 
      Route::get('/chatbot', [ChatbotController::class, 'index'])->name('chatbot.index');
     Route::post('/chatbot/ask', [ChatbotController::class, 'ask'])->name('chatbot.ask');
+
+    Route::get('auth/google', [GoogleAuthController::class, 'redirect'])->name('google.login');
+Route::get('auth/google/callback', [GoogleAuthController::class, 'callback']);
 
 });
 
